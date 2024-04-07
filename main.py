@@ -1,82 +1,107 @@
 import random
 import matplotlib.pyplot as plt
 import argparse
+import numpy as np
+import math
+
+
+def generarGrafico(titulo, ejeX, ejeY, lista1, esperado):
+    plt.title(titulo)
+    plt.xlabel(ejeX)
+    plt.ylabel(ejeY)
+    
+    lista1.insert(0, 0)
+    plt.xlim(1, numero_tiradas + 1)
+    plt.plot(lista1)
+
+    puntosX = np.array([1, numero_tiradas])
+    puntosY = np.array([esperado, esperado])
+    plt.plot(puntosX, puntosY)
+    
+    plt.plot()
+    plt.show()
+
 
 # === Setear Argumentos
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--corridas", help="Valor del numero de corridas (3 por defecto)", default=3)
+parser.add_argument("-c", "--corridas", help="Valor del numero de corridas (15 por defecto)", default=15)
 parser.add_argument("-t", "--tiradas", help="Valor del numero de tiradas por corrida (2000 por defecto)", default=2000)
 parser.add_argument("-n", "--numero", help="Valor del numero a analizar (7 por defecto)", default=7)
 args, unknown = parser.parse_known_args()
 numero_corridas = int(args.corridas)
 numero_tiradas = int(args.tiradas)
 numero = int(args.numero)
-print("Ejecutando " + str(numero_corridas) + " corridas de " + str(numero_tiradas) + " tiradas para el número " + str(
-    numero))
+print("Ejecutando " + str(numero_corridas) + " corridas de " + str(numero_tiradas) + " tiradas para el número " + str(numero))
 # ===
 
 
 # === Generar los valores aleatoreos
 corridas = []
-for i in range(0, int(numero_corridas)):
+for i in range(numero_corridas):
     corridas.append([random.randint(0, 36) for _ in range(int(numero_tiradas))])
 # ===
 
-# === Generar los valores relativos de cada corrida
-corridas_relativas = []
-for i in corridas:
-    corrida_relativa = []
-    numero_apariciones = 0
-    for j in range(0, len(i)):
-        if i[j] == int(numero):
-            numero_apariciones += 1
-        corrida_relativa.append(numero_apariciones / int(numero_tiradas))
-    corridas_relativas.append(corrida_relativa)
+# === Seleccionar una corrida al azar, para mostrar gráficos individuales
+num_corrida = random.randint(1, numero_corridas) - 1
+corrida_seleccionada = corridas[num_corrida]
 # ===
 
-# === Generar el valor esperado de las corridas
-valor_esperado = []
-for i in range(0, numero_tiradas):
-    valor_esperado.append((1/37))
+#print(corrida_seleccionada)
+
+# === Generar los valores relativos de la corrida seleccionada
+corrida_seleccionada_frecuencia = []
+
+numero_apariciones = 0
+for i in range(numero_tiradas):
+    if corrida_seleccionada[i] == numero:
+        numero_apariciones += 1
+    corrida_seleccionada_frecuencia.append(numero_apariciones / (i + 1))
 # ===
 
-# === Generar valor promedio de cada corrida
-corridas_valor_promedio = []
-for i in corridas:
-    corrida = i
-    corrida_valor_promedio=[]
-    for j in range(0, numero_tiradas):
-        total = 0
-        for h in range(0, j):
-            total += corrida[h]
-        corrida_valor_promedio.append(total / (j + 1))
-    corridas_valor_promedio.append(corrida_valor_promedio)
-# ===
 
-# === Generar valor promedio esperado de las corridas
-valor_promedio_esperado = []
-valores_posibles = []
-for i in range(0,37):
-    valores_posibles.append(i)
+# === Generar valor promedio de la corrida seleccionada
+corrida_seleccionada_promedio = []
 total = 0
-for valor in valores_posibles:
-    total = total + valor
-for i in range(0,numero_tiradas):
-    valor_promedio_esperado.append(total/valores_posibles.__len__())
-# ===
 
-# === Generando grafico de la frecuencia relativa respecto del numero de tiradas para cada corrida
-for corrida_relativa in corridas_relativas:
-    plt.plot(corrida_relativa)
-    plt.plot(valor_esperado)
-    plt.show()
-# ===
-
-# === Generando grafico del valor promedio respecto del numero de tiradas para cada corrida
-for corrida_valor_promedio in corridas_valor_promedio:
-    plt.plot(corrida_valor_promedio)
-    plt.plot(valor_promedio_esperado)
-    plt.show()
+for i in range(numero_tiradas):
+    total += corrida_seleccionada[i]
+    corrida_seleccionada_promedio.append(total / (i + 1))
 # ===
 
 
+# === Generar varianza de cada corrida
+corrida_seleccionada_varianza = []
+
+for tirada in range(numero_tiradas):
+    total = 0
+    for i in range(tirada + 1):
+        total += (corrida_seleccionada[i] - corrida_seleccionada_promedio[tirada]) ** 2
+    corrida_seleccionada_varianza.append(total / (tirada + 1))
+# ===
+
+
+# === Generar desvio estandar de cada corrida
+corrida_seleccionada_desvio = []
+
+for tirada in range(numero_tiradas):
+    corrida_seleccionada_desvio.append(math.sqrt(corrida_seleccionada_varianza[tirada]))
+# ===
+
+
+
+# === Generando grafico de la frecuencia relativa respecto del numero de tiradas
+valor_esperado_frecuencia = 1/37
+generarGrafico('Corrida número ' + str(num_corrida + 1), 'n (número de tiradas)', 'fr (frecuencia relativa)', corrida_seleccionada_frecuencia, valor_esperado_frecuencia)
+
+
+# === Generando grafico del valor promedio respecto del numero de tiradas
+valor_esperado_promedio = 18
+generarGrafico('Corrida número ' + str(num_corrida + 1), 'n (número de tiradas)', 'vp (valor promedio de las tiradas)', corrida_seleccionada_promedio, valor_esperado_promedio)
+
+
+# === Generando grafico de la varianza con respecto del numero de tiradas
+generarGrafico('Corrida número ' + str(num_corrida + 1), 'n (número de tiradas)', 'vv (valor de la varianza)', corrida_seleccionada_varianza, 1)
+
+
+# === Generando grafico del desvio estandar con respecto del numero de tiradas
+generarGrafico('Corrida número ' + str(num_corrida + 1), 'n (número de tiradas)', 'vd (valor del desvío)', corrida_seleccionada_desvio, 1)
