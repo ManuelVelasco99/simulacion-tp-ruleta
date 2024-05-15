@@ -1,3 +1,4 @@
+import math
 import random
 import matplotlib.pyplot as plt
 import argparse
@@ -57,8 +58,10 @@ class Apuesta:
                 self.estrategia = Dalembert
             case 'f':
                 self.estrategia = Fibonacci
+                Fibonacci.nAnterior = 1
             case 'p':
                 self.estrategia = Paroli
+                Paroli.contador = 0
 
     def calcularCapital(self, gana):
         nuevoCapital = self.capital[-1] - self.apuestaActual
@@ -140,7 +143,7 @@ class Paroli:
         
 
 def generarGraficoLineas(titulo, nro_subplot, ejeX, ejeY, lista, esperado, multiplesListas = False):
-    plt.subplot(1, 2, nro_subplot)
+    plt.subplot(2, 2, nro_subplot)
     plt.title(titulo)
     plt.xlabel(ejeX)
     plt.ylabel(ejeY)
@@ -162,11 +165,10 @@ def generarGraficoLineas(titulo, nro_subplot, ejeX, ejeY, lista, esperado, multi
     plt.plot()
 
 def generarGraficoBarras(titulo, nro_subplot, ejeX, ejeY, lista, esperado, multiplesListas = False):
-    plt.subplot(1, 2, nro_subplot)
+    plt.subplot(2, 2, nro_subplot)
     plt.title(titulo)
     plt.xlabel(ejeX)
     plt.ylabel(ejeY)
-    plt.ylim(0, 1)
 
     if multiplesListas:
         for x in range(numCorridas):
@@ -180,6 +182,27 @@ def generarGraficoBarras(titulo, nro_subplot, ejeX, ejeY, lista, esperado, multi
         plt.plot(puntosX, puntosY, label = "Valor esperado", color = "darkorange")
         plt.legend()
 
+    plt.plot()
+
+def generarHistograma(titulo, nro_subplot, ejeX, ejeY, lista, esperado, multiplesListas = False):
+    plt.subplot(2, 2, nro_subplot)
+    plt.title(titulo)
+    plt.xlabel(ejeX)
+    plt.ylabel(ejeY)
+    plt.axvline(esperado, color='darkorange', linestyle='dashed', linewidth=1)
+
+    lista2 = []
+    
+    if multiplesListas:
+        for x in range(len(lista)):
+            aux = lista[x].capital
+            for y in range(1, len(aux)):
+                lista2.append(aux[y] - aux[y - 1])
+    else:
+        for x in range(1, len(lista)):
+            lista2.append(lista[x] - lista[x - 1])
+        
+    plt.hist(lista2, bins=10, edgecolor='black')
     plt.plot()
 
 def mostrarGrafico(titulo):
@@ -229,7 +252,7 @@ def main():
 
     for x in range(numCorridas):
         apuesta = Apuesta(seleccion, multiplicador, estrategia, capitalInicial, apuestaMinima)
-        print('\nCorrida ' + str(x))
+        print('\nCorrida ' + str(x + 1))
         i = 1
 
         while apuesta.apuestaActual != -1 and apuesta.capital[-1] < capitalObjetivo:
@@ -245,17 +268,19 @@ def main():
 
 
     numSeleccionada = random.randint(0, numCorridas - 1)
+    texto = "\nNúmero de corridas: " + str(numCorridas) + " - Selección: " + str(seleccion) + " - Estrategia: " + estrategia + " - Capital inicial: " + str(capitalInicial)
+
 
     generarGraficoLineas('Capital', 1, 'n (número de tirada)', 'cc (cantidad de capital)', apuestas[numSeleccionada].capital, capitalInicial)
     generarGraficoBarras('Frecuencia relativa apuesta favorable', 2, 'n (número de tiradas)', 'fr (frecuencia relativa)', apuestas[numSeleccionada].ganadas, frEsperada)
-    mostrarGrafico('CORRIDA NÚMERO ' + str(numSeleccionada + 1))
+    generarHistograma('Capital ganado/perdido', 3, 'Cambio en el capital', 'Frecuencia absoluta', apuestas[numSeleccionada].capital, 0)
+    mostrarGrafico('CORRIDA NÚMERO ' + str(numSeleccionada + 1) + texto)
 
     generarGraficoLineas('Capital', 1, 'n (número de tirada)', 'cc (cantidad de capital)', apuestas, capitalInicial, True)
     generarGraficoBarras('Frecuencia relativa apuesta favorable', 2, 'n (número de tiradas)', 'fr (frecuencia relativa)', apuestas, frEsperada, True)
-    mostrarGrafico('MÚLTIPLES CORRIDAS')
+    generarHistograma('Capital ganado/perdido', 3, 'Cambio en el capital', 'Frecuencia absoluta', apuestas, 0, True)
+    mostrarGrafico('MÚLTIPLES CORRIDAS' + texto)
 
-
-    #    print("Ejecutando ruleta.\nNúmero de corridas: " + str(numCorridas) + " - Selección: " + str(seleccion) + " - Estrategia: " + estrategia + " - Capital: " + str(capitalInicial))
 
 
 if __name__ == "__main__":
