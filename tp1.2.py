@@ -241,7 +241,8 @@ def main():
 
     apuestaMinima = 1000
     apuestaMaxima = False
-    capitalObjetivo = 100000
+    capitalObjetivoPositivo = 100000
+    capitalObjetivoNegativo = -100000
 
     if (capitalInicial):
         apuestaMaxima = 20000
@@ -255,7 +256,7 @@ def main():
         print('\nCorrida ' + str(x + 1))
         i = 1
 
-        while apuesta.apuestaActual != -1 and apuesta.capital[-1] < capitalObjetivo:
+        while apuesta.apuestaActual != -1 and apuesta.capital[-1] < capitalObjetivoPositivo and apuesta.capital[-1] > capitalObjetivoNegativo:
             apuestaAnterior = apuesta.apuestaActual
             gana = ruleta.girar(apuesta.seleccion)
             apuesta.calcularCapital(gana)
