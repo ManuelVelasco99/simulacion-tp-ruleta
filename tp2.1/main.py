@@ -30,7 +30,7 @@ def pruebaChiCuadrado(intervalos, cantNumeros, nc):
     valorTabla = chi2.ppf(nc, cantIntervalos - 1)
     print()
     print(chiCuadrado)
-    print('Prueba de bondad de ajuste chi cuadrado para una distribución uniforme con ' + str(nc) + ' de nivel de confianza')
+    print(f'Prueba de bondad de ajuste chi cuadrado para una distribución uniforme con {nc} de nivel de confianza')
     print('El generador pasa la prueba') if chiCuadrado < valorTabla else print('El generador no pasa la prueba')
 
 
