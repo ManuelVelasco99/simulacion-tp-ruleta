@@ -1,5 +1,4 @@
-import numpy as np
-from scipy.stats import chi2
+import testsAleatoriedad
 
 
 def obtener_valores_centrales(num):
@@ -14,20 +13,9 @@ def obtener_valores_centrales(num):
     
     return str_number[start_index:end_index]
 
-def chi_square_test(numbers, categories):
-    observed_freq = np.zeros(categories)
-    category_range = 10000 // categories
-
-    for number in numbers:
-        category = number // category_range
-        observed_freq[category] += 1
-
-    expected_freq = len(numbers) / categories
-    chi_square_stat = np.sum((observed_freq - expected_freq) ** 2 / expected_freq)
-    return chi_square_stat
-
 
 semilla = 92458139658673422
+#semilla = 1931
 numerosGenerados = []
 categorias = 10
 
@@ -37,15 +25,5 @@ for i in range(50):
     semilla = nuevaSemilla
     numerosGenerados.append(semilla)
 
-chi_square_stat = chi_square_test(numerosGenerados, categorias)
-critical_value = chi2.ppf(0.95, categorias - 1)
-
-print(f"Estadístico chi cuadrado: {chi_square_stat}")
-print(f"Valor crítico: {critical_value}")
-
-if chi_square_stat < critical_value:
-    print("No se puede rechazar la hipótesis nula: los números son aleatorios")
-else:
-    print("Se rechaza la hipótesis nula: los números no son aleatorios")
-    
-
+testsAleatoriedad.ejecutar_test_chi_cuadrado(numerosGenerados)
+testsAleatoriedad.test_poker(numerosGenerados, 0.025)
