@@ -69,15 +69,15 @@ def test_poker(numeros, a):
             obs_tres_iguales += 1
 
     # Calcula la estadística chi-cuadrado para cada mano de póker
-    chiCuadradoTodosIguales = (pow((obs_todos_iguales - esp_todos_iguales), 2)) / esp_todos_iguales
-    chiCuadradoUnaPareja = (pow((obs_una_pareja - esp_una_pareja), 2)) / esp_una_pareja
-    chiCuadradoDosParejas = (pow((obs_dos_parejas - esp_dos_parejas), 2)) / esp_dos_parejas
-    chiCuadradoTresIguales = (pow((obs_tres_iguales - esp_tres_iguales), 2)) / esp_tres_iguales
-    chiCuadradoTodosDistintos = (pow((obs_todos_diferentes - esp_todos_diferentes), 2)) / esp_todos_diferentes
+    chi_cuad_todos_iguales = (pow((obs_todos_iguales - esp_todos_iguales), 2)) / esp_todos_iguales
+    chi_cuad_una_pareja = (pow((obs_una_pareja - esp_una_pareja), 2)) / esp_una_pareja
+    chi_cuad_dos_parejas = (pow((obs_dos_parejas - esp_dos_parejas), 2)) / esp_dos_parejas
+    chi_cuad_tres_iguales = (pow((obs_tres_iguales - esp_tres_iguales), 2)) / esp_tres_iguales
+    chi_cuad_todos_diferentes = (pow((obs_todos_diferentes - esp_todos_diferentes), 2)) / esp_todos_diferentes
 
     # Calcular la estadística de chi-cuadrado total.
-    chiCuadrado = chiCuadradoTodosIguales + chiCuadradoUnaPareja + chiCuadradoDosParejas + chiCuadradoTresIguales + chiCuadradoTodosDistintos
-    chi2Tabla = chi2.ppf(1 - 0.05, 5)
-    print("El valor de chi cuadrado en tabla es:", chi2Tabla)
+    chi_cuadrado = chi_cuad_todos_iguales + chi_cuad_una_pareja + chi_cuad_dos_parejas + chi_cuad_tres_iguales + chi_cuad_todos_diferentes
+    chi_2_tabla = chi2.ppf(1 - 0.05, 5)
+    print("El valor de chi cuadrado en tabla es:", chi_2_tabla)
     print("Resultado del test con una confianza del", (1 - (a * 2)) * 100, "%:",
-          "No pasa el test Poker" if chiCuadrado > chi2Tabla else "Pasa el test Poker")
+          "No pasa el test Poker" if chi_cuadrado > chi_2_tabla else "Pasa el test Poker")
