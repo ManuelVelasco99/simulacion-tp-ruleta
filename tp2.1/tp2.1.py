@@ -1,5 +1,6 @@
 import generadorGLC, generadorGCC, generadorMediosCuadrados
-from scipy.stats import chi2
+from scipy.stats import chi2, norm
+import scipy.stats as ss
 import numpy as np
 import statistics, math, random
 
@@ -12,7 +13,7 @@ def armarIntervalos(lista, cantidad):
     for x in range(cantidad):
         contador = 0
         for x in range(len(lista)):
-            if (lista[x] >= inicio and lista[x] < fin): #mirar el tema de incluir o no incluir el igual
+            if (lista[x] >= inicio and lista[x] < fin):
                 contador += 1
 
         intervalos.append(contador)
@@ -21,7 +22,7 @@ def armarIntervalos(lista, cantidad):
     intervalos[-1] += 1
     return intervalos
 
-def pruebaChiCuadrado(lista, nc, cantIntervalos):
+def testChiCuadrado(lista, nc, cantIntervalos):
     #La hipótesis es que todos los números tienen la misma probabilidad de aparecer -> distribución uniforme
     cantNumeros = len(lista)
     intervalos = armarIntervalos(datosGenerados, cantIntervalos)
@@ -34,31 +35,25 @@ def pruebaChiCuadrado(lista, nc, cantIntervalos):
         chiCuadrado += aux
 
     valorTabla = chi2.ppf(nc, cantIntervalos - 1)
-    print()
-    print(chiCuadrado)
-    print(f'Prueba de bondad de ajuste chi cuadrado para una distribución uniforme con {nc} de nivel de confianza')
-    print('El generador pasa la prueba') if chiCuadrado < valorTabla else print('El generador no pasa la prueba')
+
+    print('Prueba de bondad de ajuste chi cuadrado')
+    print(f"Estadístico obtenido: {chiCuadrado}")
+    print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nc * 100}%")
+    print('Resultado: El generador pasa la prueba') if chiCuadrado < valorTabla else print('Resultado: El generador NO pasa la prueba')
 
 
-def pruebaEntropiaAproximada(lista, m, r):
-    
-    def distanciaMaxima(v1, v2):
-        distancias = []
-        for x, y in zip(v1,v2):
-            distancias.append(abs(x - y))
-        return max(distancias)
+def testKolmogorovSmirnov(lista):
+    media, desvio = ss.norm.fit(lista)
+    kstest = ss.kstest(lista,"norm",args=(media, desvio))
 
-    def calcularPhi(m):
-        x = [[U[j] for j in range(i, i + m - 1 + 1)] for i in range(N - m + 1)]
-        C = [
-            len([1 for x_j in x if distanciaMaxima(x_i, x_j) <= r]) / (N - m + 1.0)
-            for x_i in x
-        ]
-        return (N - m + 1.0) ** (-1) * sum(np.log(C))
-
-    U = np.array(lista)
-    N = len(U)
-    return abs(calcularPhi(m + 1) - calcularPhi(m))
+    print('\nTest de Bondad Kolmogorov-Smirnov para distribución normal: ')
+    significacion = (1 - kstest.pvalue) * 100
+    print(f"Nivel de significacion: {significacion}%")
+ 
+    if kstest.pvalue < 0.01:
+        print('Los números son independientes.')
+    else:
+        print('Los números NO son independientes.')
 
 
 def test_poker(numeros, a):
@@ -109,15 +104,16 @@ def test_poker(numeros, a):
 
     # Calcular la estadística de chi-cuadrado total.
     chi_cuadrado = chi_cuad_todos_iguales + chi_cuad_una_pareja + chi_cuad_dos_parejas + chi_cuad_tres_iguales + chi_cuad_todos_diferentes
-    chi_2_tabla = chi2.ppf(1 - 0.05, 5)
+    chi_2_tabla = chi2.ppf(1 - 0.05, 99)
     print("El valor de chi cuadrado en tabla es:", chi_2_tabla)
     print("Resultado del test con una confianza del", (1 - (a * 2)) * 100, "%:",
           "No pasa el test Poker" if chi_cuadrado > chi_2_tabla else "Pasa el test Poker")
 
 
-def testRachas(lista, mediana):
+def testRachas(lista, nivelConfianza):
     cantRachas, cantPositivos, cantNegativos, longitud = 0, 0, 0, len(lista)
-    
+    mediana = statistics.median(datosGenerados)
+
     for i in range(longitud):
         if (lista[i] >= mediana and lista[i-1] < mediana) or (lista[i] < mediana and lista[i-1] >= mediana):
             cantRachas += 1
@@ -130,43 +126,55 @@ def testRachas(lista, mediana):
     rachasEsperadas = ((2 * cantPositivos * cantNegativos) / longitud) + 1
     desvioEstandar = math.sqrt((2*cantPositivos*cantNegativos * (2*cantPositivos*cantNegativos-longitud)) / ((longitud**2) * (longitud-1)))
 
+    if (desvioEstandar == 0): desvioEstandar = 0.00001
     z = (cantRachas - rachasEsperadas) / desvioEstandar
-  
-    print("Test de rachas")
-    print("Estadístico Z:", abs(z))
+    
+    aux = 1 - (1 - nivelConfianza) / 2
+    valorTabla = norm.ppf(aux)
 
-    if abs(z) > 1.96:
-        print("La secuencia de números NO es aleatoria - 95% nivel de confianza")
+    print('\nTest de rachas')
+    print(f"Estadístico obtenido Z: {abs(z)}")
+    print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nivelConfianza * 100}%")
+    if abs(z) > valorTabla:
+        print("La secuencia de números NO es aleatoria")
     else:
         print("Los números son aleatorios")
 
 
 
 if __name__ == "__main__":
-    nivelConfianza = 0.95 #para el test de bondad chi-cuadrado
+    nivelConfianza = 0.95
     cantNumeros = 1000
     cantIntervalos = 100 #justificar elección en base a la cantidad de números generados
     
     #generadorGLC
     print('\n\n---Generador Lineal Congruencial---\n')
     datosGenerados = [generadorGLC.next() for _ in range(cantNumeros)]
-    pruebaChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    print(pruebaEntropiaAproximada(datosGenerados, 2, 3))
+    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
     test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, statistics.median(datosGenerados))
+    testRachas(datosGenerados, nivelConfianza)
+    testKolmogorovSmirnov(datosGenerados)
 
     #generadorMediosCuadrados
     print('\n\n---Generador Medios Cuadrados---\n')
     datosGenerados = [generadorMediosCuadrados.next() for _ in range(cantNumeros)]
-    pruebaChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    print(pruebaEntropiaAproximada(datosGenerados, 2, 3))
+    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
     test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, statistics.median(datosGenerados))
+    testRachas(datosGenerados, nivelConfianza)
+    testKolmogorovSmirnov(datosGenerados)
 
     #generadorGCC
     print('\n\n---Generador Cuadrático Congruencial---\n')
     datosGenerados = [generadorGCC.next() for _ in range(cantNumeros)]
-    pruebaChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    print(pruebaEntropiaAproximada(datosGenerados, 2, 3))
+    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
     test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, statistics.median(datosGenerados))
+    testRachas(datosGenerados, nivelConfianza)
+    testKolmogorovSmirnov(datosGenerados)
+
+    #generadorPython
+    print('\n\n---Generador Lenguaje Python---\n')
+    datosGenerados = [random.random() for _ in range(cantNumeros)]
+    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
+    test_poker(datosGenerados, 1-nivelConfianza)
+    testRachas(datosGenerados, nivelConfianza)
+    testKolmogorovSmirnov(datosGenerados)
