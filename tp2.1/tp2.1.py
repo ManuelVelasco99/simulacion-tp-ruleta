@@ -74,7 +74,7 @@ def test_poker(numeros, a):
     # hace la prueba de póker en cada número
     for i in numeros:
         # Obtiene los primeros tres dígitos decimales del número
-        digito = str(i - int(i))[2:5]
+        digito = str(i)[:3]
 
         # Cuenta el número de ocurrencias de cada dígito
         contador_digitos = [digito.count(d) for d in digito]
@@ -96,17 +96,16 @@ def test_poker(numeros, a):
             obs_tres_iguales += 1
 
     # Calcula la estadística chi-cuadrado para cada mano de póker
-    chi_cuad_todos_iguales = (pow((obs_todos_iguales - esp_todos_iguales), 2)) / esp_todos_iguales
-    chi_cuad_una_pareja = (pow((obs_una_pareja - esp_una_pareja), 2)) / esp_una_pareja
-    chi_cuad_dos_parejas = (pow((obs_dos_parejas - esp_dos_parejas), 2)) / esp_dos_parejas
-    chi_cuad_tres_iguales = (pow((obs_tres_iguales - esp_tres_iguales), 2)) / esp_tres_iguales
-    chi_cuad_todos_diferentes = (pow((obs_todos_diferentes - esp_todos_diferentes), 2)) / esp_todos_diferentes
+    chi_cuad_todos_iguales = (pow((esp_todos_iguales - obs_todos_iguales), 2)) / esp_todos_iguales
+    chi_cuad_una_pareja = (pow((esp_una_pareja - obs_una_pareja), 2)) / esp_una_pareja
+    chi_cuad_dos_parejas = (pow(( esp_dos_parejas - obs_dos_parejas), 2)) / esp_dos_parejas
+    chi_cuad_tres_iguales = (pow((esp_tres_iguales - obs_tres_iguales), 2)) / esp_tres_iguales
+    chi_cuad_todos_diferentes = (pow(( esp_todos_diferentes - obs_todos_diferentes), 2)) / esp_todos_diferentes
 
     # Calcular la estadística de chi-cuadrado total.
     chi_cuadrado = chi_cuad_todos_iguales + chi_cuad_una_pareja + chi_cuad_dos_parejas + chi_cuad_tres_iguales + chi_cuad_todos_diferentes
-    chi_2_tabla = chi2.ppf(1 - 0.05, 99)
-    print("El valor de chi cuadrado en tabla es:", chi_2_tabla)
-    print("Resultado del test con una confianza del", (1 - (a * 2)) * 100, "%:",
+    chi_2_tabla = chi2.ppf(1 - a, 99)
+    print("Resultado del test con una confianza del", (1 - a) * 100, "%:",
           "No pasa el test Poker" if chi_cuadrado > chi_2_tabla else "Pasa el test Poker")
 
 
