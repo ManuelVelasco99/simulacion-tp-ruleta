@@ -1,8 +1,9 @@
 import generadorGLC, generadorGCC, generadorMediosCuadrados
 from scipy.stats import chi2, norm
 import scipy.stats as ss
-import numpy as np
 import statistics, math, random
+import matplotlib.pyplot as plt
+
 
 def armarIntervalos(lista, cantidad):
     long = (max(lista) - min(lista)) / cantidad
@@ -41,7 +42,6 @@ def testChiCuadrado(lista, nc, cantIntervalos):
     print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nc * 100}%")
     print('Resultado: El generador pasa la prueba') if chiCuadrado < valorTabla else print('Resultado: El generador NO pasa la prueba')
 
-
 def testKolmogorovSmirnov(lista):
     media, desvio = ss.norm.fit(lista)
     kstest = ss.kstest(lista,"norm",args=(media, desvio))
@@ -54,7 +54,6 @@ def testKolmogorovSmirnov(lista):
         print('Los números son independientes.')
     else:
         print('Los números NO son independientes.')
-
 
 def test_poker(numeros, a):
     # frecuencias esperadas
@@ -108,7 +107,6 @@ def test_poker(numeros, a):
     print("Resultado del test con una confianza del", (1 - a) * 100, "%:",
           "No pasa el test Poker" if chi_cuadrado > chi_2_tabla else "Pasa el test Poker")
 
-
 def testRachas(lista, nivelConfianza):
     cantRachas, cantPositivos, cantNegativos, longitud = 0, 0, 0, len(lista)
     mediana = statistics.median(datosGenerados)
@@ -140,6 +138,22 @@ def testRachas(lista, nivelConfianza):
         print("Los números son aleatorios")
 
 
+def generarGraficoXY(lista, titulo, nroSubplot):
+    plt.subplot(2, 2, nroSubplot)
+    puntosX = list(range(len(lista)))
+    plt.scatter(puntosX, lista)
+    plt.title(titulo)
+    plt.xlabel('N° de ejecución')
+    plt.ylabel('N° obtenido')
+    plt.plot()
+
+def mostrarGrafico(titulo):
+    plt.suptitle(titulo)
+    figManager = plt.get_current_fig_manager()
+    figManager.resize(1000, 500)
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == "__main__":
     nivelConfianza = 0.95
@@ -153,7 +167,8 @@ if __name__ == "__main__":
     test_poker(datosGenerados, 1-nivelConfianza)
     testRachas(datosGenerados, nivelConfianza)
     testKolmogorovSmirnov(datosGenerados)
-
+    generarGraficoXY(datosGenerados, 'Generador Lineal Congruencial', 1)
+    
     #generadorMediosCuadrados
     print('\n\n---Generador Medios Cuadrados---\n')
     datosGenerados = [generadorMediosCuadrados.next() for _ in range(cantNumeros)]
@@ -161,6 +176,7 @@ if __name__ == "__main__":
     test_poker(datosGenerados, 1-nivelConfianza)
     testRachas(datosGenerados, nivelConfianza)
     testKolmogorovSmirnov(datosGenerados)
+    generarGraficoXY(datosGenerados, 'Generador Medios Cuadrados', 2)
 
     #generadorGCC
     print('\n\n---Generador Cuadrático Congruencial---\n')
@@ -169,6 +185,7 @@ if __name__ == "__main__":
     test_poker(datosGenerados, 1-nivelConfianza)
     testRachas(datosGenerados, nivelConfianza)
     testKolmogorovSmirnov(datosGenerados)
+    generarGraficoXY(datosGenerados, 'Generador Cuadrático Congruencial', 3)
 
     #generadorPython
     print('\n\n---Generador Lenguaje Python---\n')
@@ -177,3 +194,7 @@ if __name__ == "__main__":
     test_poker(datosGenerados, 1-nivelConfianza)
     testRachas(datosGenerados, nivelConfianza)
     testKolmogorovSmirnov(datosGenerados)
+    generarGraficoXY(datosGenerados, 'Generador Lenguaje Python', 4)
+
+
+    mostrarGrafico('Dispersión Números Pseudoaleatorios Generados')
