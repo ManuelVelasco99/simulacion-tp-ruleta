@@ -1,7 +1,7 @@
-divisor = 2**32                 #m
-multiplicador = 1013904223      #a
-incremento = 1664525            #c
-semilla = 456
+divisor = 2**31 - 1                 #m
+multiplicador = 1103515245      #a
+incremento = 12345            #c
+semilla = 795489
 
 
 def setSeed(nuevaSemilla):

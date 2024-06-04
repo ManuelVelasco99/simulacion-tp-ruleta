@@ -3,6 +3,7 @@ from scipy.stats import chi2, norm
 import scipy.stats as ss
 import statistics, math, random
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def armarIntervalos(lista, cantidad):
@@ -41,6 +42,7 @@ def testChiCuadrado(lista, nc, cantIntervalos):
     print(f"Estadístico obtenido: {chiCuadrado}")
     print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nc * 100}%")
     print('Resultado: El generador pasa la prueba') if chiCuadrado < valorTabla else print('Resultado: El generador NO pasa la prueba')
+    return intervalos
 
 def testKolmogorovSmirnov(lista):
     media, desvio = ss.norm.fit(lista)
@@ -55,57 +57,38 @@ def testKolmogorovSmirnov(lista):
     else:
         print('Los números NO son independientes.')
 
-def test_poker(numeros, a):
-    # frecuencias esperadas
-    esp_todos_iguales = 0.01 * len(numeros)
-    esp_una_pareja = 0.297 * len(numeros)
-    esp_dos_parejas = 0.4495 * len(numeros)
-    esp_tres_iguales = 0.2401 * len(numeros)
-    esp_todos_diferentes = 0.0024 * len(numeros)
+def testPoker(numeros, a):
+    frecEspTrio = 0.01 * len(numeros)
+    frecEspUnPar = 0.27 * len(numeros)
+    frecEspTodasDistintas = 0.72 * len(numeros)
+    
+    frecObsTrio = 0
+    frecObsUnPar = 0
+    frecObsTodasDistintas = 0
 
-    # Inicializa
-    obs_todos_iguales = 0
-    obs_una_pareja = 0
-    obs_dos_parejas = 0
-    obs_tres_iguales = 0
-    obs_todos_diferentes = 0
+    for n in numeros:
+        mano = str(n)[:3]
+        if (type(n) == float):
+            mano = str(n)[2:5]
 
-    # hace la prueba de póker en cada número
-    for i in numeros:
-        # Obtiene los primeros tres dígitos decimales del número
-        digito = str(i)[:3]
-
-        # Cuenta el número de ocurrencias de cada dígito
-        contador_digitos = [digito.count(d) for d in digito]
-
-        # Cuenta el número de parejas y el número de dígitos distintos
-        contador_parejas = contador_digitos.count(2)
-        contador_diferentes = contador_digitos.count(1)
-
-        # Evalúa a qué mano de póker pertenece el número
-        if contador_diferentes == 1:  # Todos los dígitos son iguales
-            obs_todos_iguales += 1
-        elif contador_diferentes == 3:  # Todos los dígitos son diferentes
-            obs_todos_diferentes += 1
-        elif contador_parejas == 1:  # Una pareja
-            obs_una_pareja += 1
-        elif contador_parejas == 2:  # Dos parejas
-            obs_dos_parejas += 1
-        elif contador_diferentes == 2:  # Tres iguales
-            obs_tres_iguales += 1
+        if mano[0] == mano[1] and mano[1] == mano[2]:
+            frecObsTrio += 1
+        elif mano[0] == mano[1] or mano[1] == mano[2] or mano[0] == mano[2]:
+            frecObsUnPar += 1
+        else:
+            frecObsTodasDistintas += 1
+        
 
     # Calcula la estadística chi-cuadrado para cada mano de póker
-    chi_cuad_todos_iguales = (pow((esp_todos_iguales - obs_todos_iguales), 2)) / esp_todos_iguales
-    chi_cuad_una_pareja = (pow((esp_una_pareja - obs_una_pareja), 2)) / esp_una_pareja
-    chi_cuad_dos_parejas = (pow(( esp_dos_parejas - obs_dos_parejas), 2)) / esp_dos_parejas
-    chi_cuad_tres_iguales = (pow((esp_tres_iguales - obs_tres_iguales), 2)) / esp_tres_iguales
-    chi_cuad_todos_diferentes = (pow(( esp_todos_diferentes - obs_todos_diferentes), 2)) / esp_todos_diferentes
-
+    chiCuadradoTrio = (frecObsTrio - frecEspTrio) ** 2 / frecEspTrio
+    chiCuadradoUnPar = (frecObsUnPar - frecEspUnPar) ** 2 / frecEspUnPar
+    chiCuadradoTodasDistintas = (frecObsTodasDistintas - frecEspTodasDistintas) ** 2 / frecEspTodasDistintas
+    
     # Calcular la estadística de chi-cuadrado total.
-    chi_cuadrado = chi_cuad_todos_iguales + chi_cuad_una_pareja + chi_cuad_dos_parejas + chi_cuad_tres_iguales + chi_cuad_todos_diferentes
-    chi_2_tabla = chi2.ppf(1 - a, 99)
+    chiCuadrado = chiCuadradoTrio + chiCuadradoUnPar + chiCuadradoTodasDistintas
+    valorTabla = chi2.ppf(1 - a, 2) #los grados de libertad provienen de las manos de 3 numeros (menos 1)
     print("Resultado del test con una confianza del", (1 - a) * 100, "%:",
-          "No pasa el test Poker" if chi_cuadrado > chi_2_tabla else "Pasa el test Poker")
+          "No pasa el test Poker" if chiCuadrado > valorTabla else "Pasa el test Poker")
 
 def testRachas(lista, nivelConfianza):
     cantRachas, cantPositivos, cantNegativos, longitud = 0, 0, 0, len(lista)
@@ -138,14 +121,27 @@ def testRachas(lista, nivelConfianza):
         print("Los números son aleatorios")
 
 
-def generarGraficoXY(lista, titulo, nroSubplot):
-    plt.subplot(2, 2, nroSubplot)
+def generarGraficoXY(lista, nroSubplot):
+    plt.subplot(1, 2, nroSubplot)
     puntosX = list(range(len(lista)))
     plt.scatter(puntosX, lista)
-    plt.title(titulo)
+    plt.title('Dispersión Valores Pseudoaleatorios')
     plt.xlabel('N° de ejecución')
     plt.ylabel('N° obtenido')
     plt.plot()
+
+def generarGraficoBarras(lista, nro_subplot, esperado):
+    plt.subplot(1, 2, nro_subplot)
+    plt.bar(x = np.arange(len(lista)) + 1, height = lista)
+    puntosX = np.array([1, len(lista)])
+    puntosY = np.array([esperado, esperado])
+    plt.plot(puntosX, puntosY, label = "Valor esperado", color = "darkorange")
+    plt.title('Frecuencias Absolutas de 100 Intervalos')
+    plt.legend()
+    plt.xlabel('N° de intervalo')
+    plt.ylabel('Frecuencia absoluta')
+    plt.plot()
+
 
 def mostrarGrafico(titulo):
     plt.suptitle(titulo)
@@ -155,46 +151,30 @@ def mostrarGrafico(titulo):
     plt.show()
 
 
+def testearGenerador(datosGenerados, nombre, nivelConfianza, cantIntervalos):
+    print(f"\n\n---{nombre}---\n")
+    intervalos = testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
+    testPoker(datosGenerados, 1-nivelConfianza)
+    testRachas(datosGenerados, nivelConfianza)
+    testKolmogorovSmirnov(datosGenerados)
+    generarGraficoXY(datosGenerados, 1)
+    generarGraficoBarras(intervalos, 2, len(datosGenerados)/cantIntervalos)
+    mostrarGrafico(nombre)
+
+
 if __name__ == "__main__":
     nivelConfianza = 0.95
     cantNumeros = 1000
     cantIntervalos = 100 #justificar elección en base a la cantidad de números generados
     
-    #generadorGLC
-    print('\n\n---Generador Lineal Congruencial---\n')
     datosGenerados = [generadorGLC.next() for _ in range(cantNumeros)]
-    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, nivelConfianza)
-    testKolmogorovSmirnov(datosGenerados)
-    generarGraficoXY(datosGenerados, 'Generador Lineal Congruencial', 1)
+    testearGenerador(datosGenerados, 'Generador Lineal Congruencial', nivelConfianza, cantIntervalos)    
     
-    #generadorMediosCuadrados
-    print('\n\n---Generador Medios Cuadrados---\n')
     datosGenerados = [generadorMediosCuadrados.next() for _ in range(cantNumeros)]
-    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, nivelConfianza)
-    testKolmogorovSmirnov(datosGenerados)
-    generarGraficoXY(datosGenerados, 'Generador Medios Cuadrados', 2)
-
-    #generadorGCC
-    print('\n\n---Generador Cuadrático Congruencial---\n')
+    testearGenerador(datosGenerados, 'Generador Medios Cuadrados', nivelConfianza, cantIntervalos)
+    
     datosGenerados = [generadorGCC.next() for _ in range(cantNumeros)]
-    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, nivelConfianza)
-    testKolmogorovSmirnov(datosGenerados)
-    generarGraficoXY(datosGenerados, 'Generador Cuadrático Congruencial', 3)
-
-    #generadorPython
-    print('\n\n---Generador Lenguaje Python---\n')
+    testearGenerador(datosGenerados, 'Generador Cuadrático Congruencial', nivelConfianza, cantIntervalos)
+    
     datosGenerados = [random.random() for _ in range(cantNumeros)]
-    testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
-    test_poker(datosGenerados, 1-nivelConfianza)
-    testRachas(datosGenerados, nivelConfianza)
-    testKolmogorovSmirnov(datosGenerados)
-    generarGraficoXY(datosGenerados, 'Generador Lenguaje Python', 4)
-
-
-    mostrarGrafico('Dispersión Números Pseudoaleatorios Generados')
+    testearGenerador(datosGenerados, 'Generador Lenguaje Python', nivelConfianza, cantIntervalos)
