@@ -7,12 +7,12 @@ import numpy as np
 
 
 def armarIntervalos(lista, cantidad):
-    long = (max(lista) - min(lista)) / cantidad
-    intervalos = []
-    inicio = min(lista)
+    long = 1 / cantidad #los numeros pertenecen al intervalo [0, 1)
+    inicio = 0
     fin = inicio + long
+    intervalos = []
 
-    for x in range(cantidad):
+    for _ in range(cantidad):
         contador = 0
         for x in range(len(lista)):
             if (lista[x] >= inicio and lista[x] < fin):
@@ -21,14 +21,13 @@ def armarIntervalos(lista, cantidad):
         intervalos.append(contador)
         inicio = fin
         fin = fin + long
-    intervalos[-1] += 1
+
     return intervalos
 
 def testChiCuadrado(lista, nc, cantIntervalos):
     #La hipótesis es que todos los números tienen la misma probabilidad de aparecer -> distribución uniforme
     cantNumeros = len(lista)
     intervalos = armarIntervalos(datosGenerados, cantIntervalos)
-    cantIntervalos = len(intervalos)
     frecEsperada = cantNumeros / cantIntervalos
 
     chiCuadrado = 0
@@ -38,7 +37,7 @@ def testChiCuadrado(lista, nc, cantIntervalos):
 
     valorTabla = chi2.ppf(nc, cantIntervalos - 1)
 
-    print('Prueba de bondad de ajuste chi cuadrado')
+    print('Prueba de bondad de ajuste chi cuadrado para distribución uniforme')
     print(f"Estadístico obtenido: {chiCuadrado}")
     print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nc * 100}%")
     print('Resultado: El generador pasa la prueba') if chiCuadrado < valorTabla else print('Resultado: El generador NO pasa la prueba')
@@ -48,32 +47,37 @@ def testKolmogorovSmirnov(lista):
     media, desvio = ss.norm.fit(lista)
     kstest = ss.kstest(lista,"norm",args=(media, desvio))
 
-    print('\nTest de Bondad Kolmogorov-Smirnov para distribución normal: ')
+    print('\nTest de Bondad Kolmogorov-Smirnov para distribución normal')
     significacion = (1 - kstest.pvalue) * 100
     print(f"Nivel de significacion: {significacion}%")
  
     if kstest.pvalue < 0.01:
-        print('Los números son independientes.')
+        print('Los números son independientes')
     else:
-        print('Los números NO son independientes.')
+        print('Los números NO son independientes')
 
 def testPoker(numeros, a):
-    frecEspTrio = 0.01 * len(numeros)
-    frecEspUnPar = 0.27 * len(numeros)
-    frecEspTodasDistintas = 0.72 * len(numeros)
+    frecObsTrio, frecObsUnPar, frecObsTodasDistintas = 0, 0, 0
+    secuencia = []
+    grupo = []
+
+    for x in range(len(numeros)):
+        aux = str(numeros[x])[2]
+        grupo.append(int(aux))
+        if (x % 3 == 2):
+            secuencia.append(grupo)
+            grupo = []
+
+    frecEspTrio = 0.01 * len(secuencia)
+    frecEspUnPar = 0.27 * len(secuencia)
+    frecEspTodasDistintas = 0.72 * len(secuencia)
     
-    frecObsTrio = 0
-    frecObsUnPar = 0
-    frecObsTodasDistintas = 0
+    
 
-    for n in numeros:
-        mano = str(n)[:3]
-        if (type(n) == float):
-            mano = str(n)[2:5]
-
-        if mano[0] == mano[1] and mano[1] == mano[2]:
+    for grupo in secuencia:
+        if grupo[0] == grupo[1] and grupo[1] == grupo[2]:
             frecObsTrio += 1
-        elif mano[0] == mano[1] or mano[1] == mano[2] or mano[0] == mano[2]:
+        elif grupo[0] == grupo[1] or grupo[1] == grupo[2] or grupo[0] == grupo[2]:
             frecObsUnPar += 1
         else:
             frecObsTodasDistintas += 1
@@ -86,9 +90,13 @@ def testPoker(numeros, a):
     
     # Calcular la estadística de chi-cuadrado total.
     chiCuadrado = chiCuadradoTrio + chiCuadradoUnPar + chiCuadradoTodasDistintas
-    valorTabla = chi2.ppf(1 - a, 2) #los grados de libertad provienen de las manos de 3 numeros (menos 1)
-    print("Resultado del test con una confianza del", (1 - a) * 100, "%:",
-          "No pasa el test Poker" if chiCuadrado > valorTabla else "Pasa el test Poker")
+    valorTabla = chi2.ppf(1 - a, 2) #los grados de libertad provienen de las manos de 3 numeros y 3 posibilidades (menos 1)
+
+    print('\nTest de Poker formando manos de 3 elementos')
+    print(f"Estadístico obtenido: {chiCuadrado}")
+    print(f"Valor crítico: {valorTabla} - Nivel de confianza: {(1-a) * 100}%")
+    print('Resultado: El generador pasa el test') if chiCuadrado < valorTabla else print('Resultado: El generador NO pasa el test')
+
 
 def testRachas(lista, nivelConfianza):
     cantRachas, cantPositivos, cantNegativos, longitud = 0, 0, 0, len(lista)
@@ -112,7 +120,7 @@ def testRachas(lista, nivelConfianza):
     aux = 1 - (1 - nivelConfianza) / 2
     valorTabla = norm.ppf(aux)
 
-    print('\nTest de rachas')
+    print('\nTest de rachas según mediana')
     print(f"Estadístico obtenido Z: {abs(z)}")
     print(f"Valor crítico: {valorTabla} - Nivel de confianza: {nivelConfianza * 100}%")
     if abs(z) > valorTabla:
@@ -151,8 +159,10 @@ def mostrarGrafico(titulo):
     plt.show()
 
 
-def testearGenerador(datosGenerados, nombre, nivelConfianza, cantIntervalos):
+def testearGenerador(generador, nombre):
+    global datosGenerados
     print(f"\n\n---{nombre}---\n")
+    datosGenerados = [generador.random() for _ in range(cantNumeros)]
     intervalos = testChiCuadrado(datosGenerados, nivelConfianza, cantIntervalos)
     testPoker(datosGenerados, 1-nivelConfianza)
     testRachas(datosGenerados, nivelConfianza)
@@ -166,15 +176,9 @@ if __name__ == "__main__":
     nivelConfianza = 0.95
     cantNumeros = 1000
     cantIntervalos = 100 #justificar elección en base a la cantidad de números generados
+    datosGenerados = []
     
-    datosGenerados = [generadorGLC.next() for _ in range(cantNumeros)]
-    testearGenerador(datosGenerados, 'Generador Lineal Congruencial', nivelConfianza, cantIntervalos)    
-    
-    datosGenerados = [generadorMediosCuadrados.next() for _ in range(cantNumeros)]
-    testearGenerador(datosGenerados, 'Generador Medios Cuadrados', nivelConfianza, cantIntervalos)
-    
-    datosGenerados = [generadorGCC.next() for _ in range(cantNumeros)]
-    testearGenerador(datosGenerados, 'Generador Cuadrático Congruencial', nivelConfianza, cantIntervalos)
-    
-    datosGenerados = [random.random() for _ in range(cantNumeros)]
-    testearGenerador(datosGenerados, 'Generador Lenguaje Python', nivelConfianza, cantIntervalos)
+    testearGenerador(generadorGLC, 'Generador Lineal Congruencial')    
+    testearGenerador(generadorMediosCuadrados, 'Generador Medios Cuadrados')
+    testearGenerador(generadorGCC, 'Generador Cuadrático Congruencial')
+    testearGenerador(random, 'Generador Lenguaje Python')
