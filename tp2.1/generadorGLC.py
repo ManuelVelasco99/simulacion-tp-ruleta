@@ -8,7 +8,7 @@ def setSeed(nuevaSemilla):
     global semilla
     semilla = nuevaSemilla
 
-def next():
+def random():
     global semilla
     semilla = (multiplicador * semilla + incremento) % divisor
-    return semilla
+    return semilla / divisor

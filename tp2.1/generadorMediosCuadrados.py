@@ -16,7 +16,7 @@ def setSeed(nuevaSemilla):
     global semilla
     semilla = nuevaSemilla
 
-def next():
+def random():
     global semilla
     valor = semilla**2
     # agrega ceros al inicio si hay menos de 8 digitos
@@ -25,4 +25,4 @@ def next():
             valor = "0" + str(valor)
         
     semilla = int(obtener_valores_centrales(valor))
-    return semilla
+    return float('0.' + str(semilla))
