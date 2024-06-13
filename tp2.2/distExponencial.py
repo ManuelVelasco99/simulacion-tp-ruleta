@@ -2,21 +2,32 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from scipy.stats import expon, chi2
-import numpy as num
-
-def generar_exponencial(numero, lambda_param):
-    
-    # metodo de la transformada inversa
-    exponenciales = -np.log(numero) / lambda_param
-    
-    return exponenciales
-
 
 # Parámetro lambda
 lambda_param = 0.5
 
 # Número de valores a generar
 n = 1000
+
+def generarExponencialTransfInversa(numero, lambda_param):
+    
+    # metodo de la transformada inversa
+    exponenciales = -np.log(numero) / lambda_param
+    
+    return exponenciales
+
+def generarExponencialRechazo(lambda_, M, n):
+    muestras = []
+    c = lambda_ * M
+    
+    while len(muestras) < n:
+        X = np.random.uniform(0, M)
+        U = np.random.uniform(0, 1)
+        
+        if U <= (lambda_ * np.exp(-lambda_ * X)) / c:
+            muestras.append(X)
+    
+    return np.array(muestras)
 
 
 def armarIntervalos(lista, cantIntervalos):
@@ -52,24 +63,43 @@ def testChiCuadrado(lista, nc, cantIntervalos):
     print('Resultado: Supera el test') if chiCuadrado < valorTabla else print('Resultado: NO supera el test')
     return frecuencias_observadas, frecuencias_esperadas
 
-def graficar_exponencial():
+def graficarExponencialInversa():
     numero = [random.uniform(0, 1) for i in range(n)]
-    num = generar_exponencial(numero, lambda_param)
+    num = generarExponencialTransfInversa(numero, lambda_param)
 
     # Definir funcion de densidad y graficar para comparar
     x = np.linspace(expon.ppf(0.0001, scale=1 / lambda_param), expon.ppf(0.999, scale=1 / lambda_param), 100)
     fig, ax = plt.subplots(1, 1)
-    ax.plot(x, expon.pdf(x, scale=1 / lambda_param), 'r-', lw=2, alpha=0.6, label='exponencial ')
+    ax.plot(x, expon.pdf(x, scale=1 / lambda_param), 'r-', lw=2, alpha=0.6, label='Función de densidad de probabilidad')
     ax.legend(loc='best', frameon=False)
 
     testChiCuadrado(num, 0.95, 10)
     # Histograma de densidades de x aceptadas por el metodo de rechazo
-    ax.hist(num, density=True, bins='auto', histtype='stepfilled')
+    ax.hist(num, density=True, bins='auto', edgecolor='black', label='Muestras generadas')
     plt.ylabel("Densidad de ocurrencias")
     plt.xlabel("Valor de la variable")
-    plt.title('Variable aleatoria con distribucion Exponencial - Método de rechazo')
+    plt.title('Variable aleatoria con distribucion Exponencial - Método T. inversa')
+    plt.show()
+
+def graficarExponencialRechazo():
+    M = 10
+    num = generarExponencialRechazo(lambda_param,M,n)
+
+    # Definir funcion de densidad y graficar para comparar
+    x = np.linspace(expon.ppf(0.0001, scale=1 / lambda_param), expon.ppf(0.999, scale=1 / lambda_param), 100)
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(x, expon.pdf(x, scale=1 / lambda_param), 'r-', lw=2, alpha=0.6, label='Función de densidad de probabilidad')
+    ax.legend(loc='best', frameon=False)
+
+    testChiCuadrado(num, 0.95, 10)
+    # Histograma de densidades de x aceptadas por el metodo de rechazo
+    ax.hist(num, density=True, bins='auto', edgecolor='black', label='Muestras generadas')
+    plt.ylabel("Densidad de ocurrencias")
+    plt.xlabel("Valor de la variable")
+    plt.title('Variable aleatoria con distribucion Exponencial - Método Rechazo')
     plt.show()
 
 
-graficar_exponencial()
+graficarExponencialInversa()
+graficarExponencialRechazo()
 
